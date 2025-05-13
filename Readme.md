@@ -29,7 +29,7 @@ You are not supposed to use this code in production, but it is a good starting p
 4. Install the `ngrok` to expose your local server to the internet.
     ##### For Mac
     ```bash
-    brew install ngrok/ngrok/ngrok
+    brew install ngrok
     ```
     ##### For Linux
     ```bash
