@@ -74,6 +74,10 @@ func main() {
 				mainMenu()
 			case "/devices":
 				chooseDevice()
+			case "/register-device":
+				registerDevice()
+			case "/add-webhook-url":
+				addWebhookURL()
 			case "/list-conversations":
 				chooseConversation()
 			case "/exit":
