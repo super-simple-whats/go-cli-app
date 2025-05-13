@@ -178,7 +178,7 @@ func addWebhookURL() {
 	fmt.Println("No webhook URLs found. Adding a new webhook URL...")
 	fmt.Println("--------------------------------------------------")
 
-	fmt.Print("Enter webhook URL: ")
+	fmt.Print("Enter webhook URL (be sure to set the path the webhook server is listening to): ")
 	scanner := bufio.NewScanner(os.Stdin)
 	scanner.Scan()
 	webhookURL = scanner.Text()
