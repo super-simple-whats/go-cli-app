@@ -74,6 +74,8 @@ func main() {
 				mainMenu()
 			case "/devices":
 				chooseDevice()
+			case "/forget-device":
+				forgetDevice()
 			case "/register-device":
 				registerDevice()
 			case "/add-webhook-url":
@@ -109,6 +111,7 @@ func mainMenu() {
 	fmt.Println("Type your message and press Enter to send.")
 	fmt.Println("Use /menu to show this message again.")
 	fmt.Println("Use /devices to list all devices.")
+	fmt.Println("Use /forget-device to logout.")
 	fmt.Println("Use /add-webhook-url to add a webhook URL.")
 	fmt.Println("Use /register-device [device name] to register a new device.")
 	fmt.Println("Use /list-conversations to list all conversations.")
@@ -140,12 +143,15 @@ func registerDevice() {
 	qrCode, err := qrcode.New(code, qrcode.Medium)
 	if err != nil {
 		fmt.Printf("Failed to generate QR code: %v\n", err)
-	} else {
-		fmt.Println(qrCode.ToSmallString(false))
-		fmt.Println("After scanning the QR code, please restart the application.")
+		return
 	}
 
-	<-qrcodeReady
+	fmt.Println(qrCode.ToSmallString(false))
+
+	// <-qrcodeReady
+
+	fmt.Println("Restart the application and select the device from the menu.")
+	fmt.Println("--------------------------------------------------")
 }
 
 func chooseDevice() {
@@ -172,6 +178,24 @@ func chooseDevice() {
 	// depending on how your program is structured
 	time.Sleep(2 * time.Second)
 	clearScreen()
+}
+
+func forgetDevice() {
+	clearScreen()
+
+	fmt.Printf("Are you sure you want to logout from the device %s? (y/n)", currentDevice)
+	var choice string
+	fmt.Scanf("%s", &choice)
+	if choice != "y" && choice != "Y" {
+		fmt.Println("Logout cancelled.")
+		return
+	}
+
+	err := ssw.ForgetDevice(APIKey, currentDevice)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		return
+	}
 }
 
 func addWebhookURL() {
@@ -246,14 +270,14 @@ func chooseConversation() {
 
 func showConversation() {
 	// Implement the logic to show the conversation with the given recipientID
+	if currentRecipient == "" {
+		return
+	}
+
 	clearScreen()
 
 	for _, message := range messages {
-		formattedDateStr := message.MessageDate
-		formattedDate, err := time.Parse("2006-01-02T15:04:05Z", message.MessageDate)
-		if err == nil {
-			formattedDateStr = formattedDate.Format("2006-01-02 15:04:05")
-		}
+		formattedDateStr := message.MessageDate.Format("2006-01-02 15:04:05")
 
 		name := message.ContactName
 		if message.FromMe {

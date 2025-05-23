@@ -2,27 +2,20 @@ package ssw
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"net/http"
 )
 
-// Outgoing message structure
-type MessageRequest struct {
-	DeviceKey string `json:"device_key"`
-	Recipient string `json:"recipient"`
-	Message   string `json:"message"`
-}
-
-// Send a message to the specified recipient
-func SendMessage(APIKey, currentDevice, recipient, message string) error {
-	// Create the request payload
-
+func ForgetDevice(APIKey, deviceName string) (err error) {
 	// Send the HTTP POST request
+
+	body := []byte(fmt.Sprintf(`{"name":"%s"}`, deviceName))
 	client := &http.Client{}
 	req, err := http.NewRequest(
 		"POST",
-		"https://app.supersimplewhats.com/v1/messages/send/"+currentDevice+"/"+recipient,
-		bytes.NewBuffer([]byte(message)),
+		"https://app.supersimplewhats.com/v1/devices/forget_device",
+		bytes.NewBuffer(body),
 	)
 	if err != nil {
 		return fmt.Errorf("error creating request: %v", err)
@@ -41,6 +34,17 @@ func SendMessage(APIKey, currentDevice, recipient, message string) error {
 
 	if resp.StatusCode != http.StatusOK {
 		return fmt.Errorf("server returned status code: %d", resp.StatusCode)
+	}
+
+	response := httpResponse{}
+
+	err = json.NewDecoder(resp.Body).Decode(&response)
+	if err != nil {
+		return fmt.Errorf("error decoding response: %v", err)
+	}
+
+	if !response.Success {
+		return fmt.Errorf("error registering device: %s", response.Code)
 	}
 
 	return nil

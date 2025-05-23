@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"sort"
+	"time"
 )
 
 type ConversationData struct {
@@ -19,15 +20,51 @@ type ConversationData struct {
 }
 
 type Message struct {
-	ID          string  `json:"id"`
-	CreatedAt   string  `json:"created_at"`
-	UpdatedAt   string  `json:"updated_at"`
-	DeletedAt   *string `json:"deleted_at"` // Using pointer to handle null
-	MessageDate string  `json:"message_date"`
-	ContactName string  `json:"contact_name"`
-	FromMe      bool    `json:"from_me"`
-	Message     string  `json:"message"`
-	Type        string  `json:"type"`
+	ID          string    `json:"id"`
+	CreatedAt   string    `json:"created_at"`
+	UpdatedAt   string    `json:"updated_at"`
+	DeletedAt   *string   `json:"deleted_at"` // Using pointer to handle null
+	MessageDate time.Time `json:"message_date"`
+	ContactName string    `json:"contact_name"`
+	FromMe      bool      `json:"from_me"`
+	Message     string    `json:"message"`
+	Type        string    `json:"type"`
+}
+
+func (m Message) MarshalJSON() ([]byte, error) {
+	type Alias Message
+	return json.Marshal(&struct {
+		MessageDate string `json:"message_date"`
+		*Alias
+	}{
+		MessageDate: m.MessageDate.Format("2006-01-02T15:04:05Z"),
+		Alias:       (*Alias)(&m),
+	})
+}
+
+// UnmarshalJSON implements the json.Unmarshaler interface for Message
+func (m *Message) UnmarshalJSON(data []byte) error {
+	type Alias Message
+	aux := &struct {
+		MessageDate string `json:"message_date"`
+		*Alias
+	}{
+		Alias: (*Alias)(m),
+	}
+
+	if err := json.Unmarshal(data, &aux); err != nil {
+		return err
+	}
+
+	if aux.MessageDate != "" {
+		parsedTime, err := time.Parse("2006-01-02T15:04:05Z", aux.MessageDate)
+		if err != nil {
+			return err
+		}
+		m.MessageDate = parsedTime
+	}
+
+	return nil
 }
 
 type Participant struct {
@@ -86,7 +123,7 @@ func FetchConversationMessages(APIKey, currentRecipient string) (output []Messag
 
 	// sort output by message date
 	sort.Slice(output, func(i, j int) bool {
-		return output[i].MessageDate < output[j].MessageDate
+		return output[i].MessageDate.Before(output[j].MessageDate)
 	})
 
 	return output, nil

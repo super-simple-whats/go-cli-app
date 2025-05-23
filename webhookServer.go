@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 
 	"msg_repo_cli/ssw"
 )
@@ -61,7 +62,12 @@ func startWebhookServer() {
 			// 	fmt.Printf("QR code data is not a string: %v\n", event.Data)
 			// }
 			fmt.Printf("Event: %v\n", event)
+		} else if event.EventName == "logged_in" {
 			qrcodeReady <- true
+			fmt.Println("Logged in successfully from the device: ", event.DeviceName)
+		} else if event.EventName == "logout" {
+			fmt.Println("Logged out from device:", event.DeviceName)
+			os.Exit(0)
 		}
 
 		w.WriteHeader(http.StatusOK)
